@@ -5,20 +5,19 @@ from matplotlib.animation import FuncAnimation
 # %% Define initial values, and constants
 # lenghts in m, masses in kg
 length = 15.0
-g = 9.82
+g = -9.82
 hight = 4.0
 Mass_motvikt = 500.0
 Mass_length = 50.0
 Mass_partikel = 5.0
 Length_string = 5.0
-a = 4/15.0
+a = 0.25
 length_counterwight = length * a
-
 # Moment of inertia 
 I = - Mass_motvikt * length_counterwight**2 + Mass_length * (length/2 - length_counterwight)**2 + 1/12 * Mass_length * length**2
 
 # Initial angles 
-phi0 = (np.arcsin(hight / (length - length_counterwight)) - 45.0 * np.pi / 180.0)  
+phi0 = (np.arcsin(-hight / (length - length_counterwight)))  
 theta0 = (np.pi - phi0)  # Set theta0 to -pi (180 degrees) for negative x-direction
 
 phidot0 = 0.0
@@ -26,9 +25,9 @@ thetadot0 = 0.0
 u0 = (phi0, theta0, phidot0, thetadot0)
 
 # sanity print
-print("start constraint check:", (length - length_counterwight) * np.sin(phi0) + Length_string * np.sin(theta0 + phi0))
+#print(f"start constraint check: y={ (length - length_counterwight) * np.sin(phi0)+ Length_string * np.sin(theta0 + phi0)} ,x={(length - length_counterwight) * np.cos(phi0) + Length_string * np.cos(theta0 + phi0)}")
 
-tspan = np.linspace(0, 2.0, 500)
+tspan = np.linspace(0, 2.0, 200)
 
 # %% Define derivative function using the extended-model linear system
 def f(t, u):
@@ -45,19 +44,19 @@ def f(t, u):
     
     # Kinematic and dynamic equations from step 2
     # Calculate normal force N from eq5
-    N = -m_p * (g * np.sin(phi + theta))  # Since a_x = a_y = 0 for fixed pivot
+    N = -m_p * (g * np.sin(phi + theta)-l*(phidot+thetadot)**2-L*(1-a)*phidot**2*np.cos(theta))  # Since a_x = a_y = 0 for fixed pivot
     
     # Calculate phi_ddot from eq3 (moment equation)
-    moment_motvikt = M * g * np.sin(phi) * (a * L)
-    moment_arm = m * g * np.sin(phi) * (L/2 - a * L)
+    moment_motvikt = M * g * np.cos(phi) * (a * L)
+    moment_arm = -(m * g * np.cos(phi) * (L/2 - a * L))
     moment_inertia = I
     
     # Solve for phi_ddot from moment equation
-    phidd = (moment_motvikt + moment_arm + (1-a)*L*N*np.sin(theta)) / moment_inertia
+    phidd = (moment_motvikt + moment_arm + (1-a)*L*N*np.sin(theta)) / (moment_inertia+m_p*(L-L*a)**2*np.sin(theta)**2)
     
     # Calculate theta_ddot using constraint equation
     # Using the simplified form from your original commented code which worked correctly
-    thetadd = (-phidot**2*(L-L*a)*np.sin(theta) - phidd*(L-L*a)*np.cos(theta))/l
+    thetadd = ((-phidot**2*L*(1-a)*np.sin(theta) - phidd*L*(1-a)*np.cos(theta)-g*np.cos(phi+theta))/l)-phidd
     
     dudt = (phidot, thetadot, phidd, thetadd)
     return dudt
