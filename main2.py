@@ -6,7 +6,7 @@ from matplotlib.widgets import Slider, Button  # added widgets import
 # %% Define initial values, and constants
 # lenghts in m, masses in kg
 L = 15.0 #length of arm
-g = -9.82 #gravity m/s^2
+g = 9.82 #gravity m/s^2
 hight = 4.0 #hight of pole
 M = 500.0 #mass of counterweight
 m = 50.0 #mass of arm
@@ -15,7 +15,7 @@ l = 5.0 #length of sling
 a = 0.25 #relative position of counterweight along arm (0-1)
 
 # Moment of inertia 
-I = - M * (L*a)**2 + m * (L/2 - (L*a))**2 + 1/12 * m * L**2
+I = ((1/12)*m*(L**2)+m*((L/2)-a*L)**2)+M*(a*L)**2 
 
 # Initial angles 
 phi0 = (np.arcsin(-hight / (L - (L*a))))  
@@ -42,19 +42,18 @@ def f(t, u):
     
     # Kinematic and dynamic equations from step 2
     # Calculate normal force N from eq5
-    N = -m_p * (g * np.sin(phi + theta)-l*(phidot+thetadot)**2-L*(1-a)*phidot**2*np.cos(theta))  # Since a_x = a_y = 0 for fixed pivot
+    N = -m_p * (-g * np.sin(phi + theta)    +l*(phidot+thetadot)**2   -L*(1-a)*phidot**2*np.cos(theta))  # Since a_x = a_y = 0 for fixed pivot
     
     # Calculate phi_ddot from eq3 (moment equation)
     moment_motvikt = M * g * np.cos(phi) * (a * L)
     moment_arm = -(m * g * np.cos(phi) * (L/2 - a * L))
-    moment_inertia = I
+    
     
     # Solve for phi_ddot from moment equation
-    phidd = (moment_motvikt + moment_arm + (1-a)*L*N*np.sin(theta)) / (moment_inertia+m_p*(L-L*a)**2*np.sin(theta)**2)
-    
+    phidd =(-m*g*(L/2-a*L)*np.cos(phi)+M*g*a*L*np.cos(phi) +(L-a*L)*m_p*np.sin(theta)*(np.cos(theta)*(L-a*L)*phidot**2+l*(phidot+thetadot)**2-g*np.sin(phi+theta)))/(I+m_p*((L-a*L)**2)*np.sin(theta)**2)
     # Calculate theta_ddot using constraint equation
     # Using the simplified form from your original commented code which worked correctly
-    thetadd = ((-phidot**2*L*(1-a)*np.sin(theta) - phidd*L*(1-a)*np.cos(theta)-g*np.cos(phi+theta))/l)-phidd
+    thetadd = (((-phidot**2)*(L-a*L)*np.sin(theta)-phidd*(L-a*L)*np.cos(theta)-g*np.cos(phi+theta))/l)-phidd 
     
     dudt = (phidot, thetadot, phidd, thetadd)
     return dudt
