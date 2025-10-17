@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 from matplotlib.animation import FuncAnimation
+from matplotlib.widgets import Slider, Button  # added widgets import
 # %% Define initial values, and constants
 # lenghts in m, masses in kg
 L = 15.0 #length of arm
@@ -28,6 +29,7 @@ u0 = (phi0, theta0, phidot0, thetadot0)
 #print(f"start constraint check: y={ (L - (L*a)) * np.sin(phi0)+ l * np.sin(theta0 + phi0)} ,x={(L - (L*a)) * np.cos(phi0) + l * np.cos(theta0 + phi0)}")
 
 tspan = np.linspace(0, 2.0, 400)
+
 
 # %% Define derivative function using the extended-model linear system
 def f(t, u):
@@ -139,6 +141,88 @@ def update(frame):
 
 # Create animation
 ani = FuncAnimation(fig, update, frames=len(tspan), init_func=init, blit=True, interval=20)
+
+# Add slider to control frame index
+dt = tspan[1] - tspan[0]  # added: time step in seconds
+slider_ax = fig.add_axes([0.15, 0.02, 0.65, 0.03])  # x, y, width, height
+# use time (seconds) for slider range and step
+frame_slider = Slider(slider_ax, 'Time (s)', tspan[0], tspan[-1], valinit=tspan[0], valstep=dt, valfmt='%0.3f')
+
+# Interaction state for slider dragging
+slider_active = False
+slider_idx = 0
+current_idx = 0  # added: track which frame is currently shown
+
+# Callback to update plot when slider is moved (do NOT stop animation)
+def on_slider(val):
+    global slider_active, slider_idx
+    # val is time in seconds -> convert to nearest frame index
+    slider_active = True
+    idx = int(round((val - tspan[0]) / dt))
+    idx = max(0, min(len(tspan)-1, idx))
+    slider_idx = idx
+    # Update line data to the selected frame immediately
+    x = [0, x_arm[slider_idx], x_sling[slider_idx]]
+    y = [0, y_arm[slider_idx], y_sling[slider_idx]]
+    line.set_data(x, y)
+    fig.canvas.draw_idle()
+
+frame_slider.on_changed(on_slider)
+
+# Detect mouse release to stop "dragging" mode
+def on_slider_release(event):
+    global slider_active
+    if event.inaxes == slider_ax:
+        slider_active = False
+
+fig.canvas.mpl_connect('button_release_event', on_slider_release)
+
+# Optional: add Play/Pause button to control animation and keep slider synced
+# moved button up so it doesn't overlap the slider label
+play_ax = fig.add_axes([0.82, 0.06, 0.12, 0.04])  # x, y, width, height (y increased from 0.02 to 0.06)
+play_button = Button(play_ax, 'Play')
+
+anim_running = True
+def toggle_play(event):
+    global anim_running, current_idx
+    if anim_running:
+        ani.event_source.stop()
+        # force draw of current frame so it remains visible when paused
+        try:
+            _orig_update(current_idx)
+        except Exception:
+            pass
+        fig.canvas.draw_idle()
+        play_button.label.set_text('Play')
+    else:
+        ani.event_source.start()
+        play_button.label.set_text('Pause')
+    anim_running = not anim_running
+
+play_button.on_clicked(toggle_play)
+
+# Keep slider synced while animating by updating slider in update()
+_orig_update = update
+def update_with_slider(frame):
+    global current_idx
+    # If user is dragging the slider, show the slider frame instead of the animation frame
+    if slider_active:
+        idx = slider_idx
+    else:
+        idx = int(frame)  # use current animation frame
+    current_idx = idx  # update tracked current frame
+    result = _orig_update(idx)
+    # update slider value only when not interacting (avoid triggering on_slider)
+    if not slider_active:
+        frame_slider.eventson = False
+        frame_slider.set_val(tspan[idx])   # set slider in seconds
+        frame_slider.eventson = True
+    return result
+
+# swap animation to use the wrapped updater
+ani.event_source.stop()
+ani._func = update_with_slider
+ani.event_source.start()
 
 plt.title("Double Pendulum Animation")
 plt.show()
