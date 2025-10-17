@@ -4,20 +4,20 @@ from scipy.integrate import solve_ivp
 from matplotlib.animation import FuncAnimation
 # %% Define initial values, and constants
 # lenghts in m, masses in kg
-length = 15.0
-g = -9.82
-hight = 4.0
-Mass_motvikt = 500.0
-Mass_length = 50.0
-Mass_partikel = 5.0
-Length_string = 5.0
-a = 0.25
-length_counterwight = length * a
+L = 15.0 #length of arm
+g = -9.82 #gravity m/s^2
+hight = 4.0 #hight of pole
+M = 500.0 #mass of counterweight
+m = 50.0 #mass of arm
+m_p = 5.0 #mass of projectile
+l = 5.0 #length of sling
+a = 0.25 #relative position of counterweight along arm (0-1)
+
 # Moment of inertia 
-I = - Mass_motvikt * length_counterwight**2 + Mass_length * (length/2 - length_counterwight)**2 + 1/12 * Mass_length * length**2
+I = - M * (L*a)**2 + m * (L/2 - (L*a))**2 + 1/12 * m * L**2
 
 # Initial angles 
-phi0 = (np.arcsin(-hight / (length - length_counterwight)))  
+phi0 = (np.arcsin(-hight / (L - (L*a))))  
 theta0 = (np.pi - phi0)  # Set theta0 to -pi (180 degrees) for negative x-direction
 
 phidot0 = 0.0
@@ -25,9 +25,9 @@ thetadot0 = 0.0
 u0 = (phi0, theta0, phidot0, thetadot0)
 
 # sanity print
-#print(f"start constraint check: y={ (length - length_counterwight) * np.sin(phi0)+ Length_string * np.sin(theta0 + phi0)} ,x={(length - length_counterwight) * np.cos(phi0) + Length_string * np.cos(theta0 + phi0)}")
+#print(f"start constraint check: y={ (L - (L*a)) * np.sin(phi0)+ l * np.sin(theta0 + phi0)} ,x={(L - (L*a)) * np.cos(phi0) + l * np.cos(theta0 + phi0)}")
 
-tspan = np.linspace(0, 2.0, 200)
+tspan = np.linspace(0, 2.0, 400)
 
 # %% Define derivative function using the extended-model linear system
 def f(t, u):
@@ -36,11 +36,7 @@ def f(t, u):
     phi, theta, phidot, thetadot = u
 
     # For clarity name local variables matching symbolic eqns:
-    L = length
-    l = Length_string
-    M = Mass_motvikt
-    m = Mass_length
-    m_p = Mass_partikel
+
     
     # Kinematic and dynamic equations from step 2
     # Calculate normal force N from eq5
@@ -77,13 +73,13 @@ omega_theta = np.degrees(sol.y[3]) # theta_dot in degrees/s
 phi_rad = sol.y[0]
 theta_rad = sol.y[1]
 
-X = (length - length_counterwight) * np.cos(phi_rad) + Length_string * np.cos(theta_rad + phi_rad)
-Y = (length - length_counterwight) * np.sin(phi_rad) + Length_string * np.sin(theta_rad + phi_rad)
+X = (L - (L*a)) * np.cos(phi_rad) + l * np.cos(theta_rad + phi_rad)
+Y = (L - (L*a)) * np.sin(phi_rad) + l * np.sin(theta_rad + phi_rad)
 
-x_arm = (length - length_counterwight) * np.cos(phi_rad)
-y_arm = (length - length_counterwight) * np.sin(phi_rad)
-x_sling = x_arm + Length_string * np.cos(theta_rad + phi_rad)
-y_sling = y_arm + Length_string * np.sin(theta_rad + phi_rad)
+x_arm = (L - (L*a)) * np.cos(phi_rad)
+y_arm = (L - (L*a)) * np.sin(phi_rad)
+x_sling = x_arm + l * np.cos(theta_rad + phi_rad)
+y_sling = y_arm + l * np.sin(theta_rad + phi_rad)
 
 # Plotting
 fig, axs = plt.subplots(2, 2, figsize=(10, 8))
@@ -123,8 +119,8 @@ plt.show()
 
 # Setup figure and axis for animation
 fig, ax = plt.subplots(figsize=(6, 6))
-ax.set_xlim(-((length - length_counterwight) + Length_string + 2), (length - length_counterwight) + Length_string + 2)
-ax.set_ylim(-((length - length_counterwight) + Length_string + 2), (length - length_counterwight) + Length_string + 2)
+ax.set_xlim(-((L - (L*a)) + l + 2), (L - (L*a)) + l + 2)
+ax.set_ylim(-((L - (L*a)) + l + 2), (L - (L*a)) + l + 2)
 ax.set_aspect('equal')
 ax.grid()
 
