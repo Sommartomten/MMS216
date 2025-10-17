@@ -151,7 +151,6 @@ frame_slider = Slider(slider_ax, 'Time (s)', tspan[0], tspan[-1], valinit=tspan[
 # Interaction state for slider dragging
 slider_active = False
 slider_idx = 0
-current_idx = 0  # added: track which frame is currently shown
 
 # Callback to update plot when slider is moved (do NOT stop animation)
 def on_slider(val):
@@ -178,21 +177,14 @@ def on_slider_release(event):
 fig.canvas.mpl_connect('button_release_event', on_slider_release)
 
 # Optional: add Play/Pause button to control animation and keep slider synced
-# moved button up so it doesn't overlap the slider label
-play_ax = fig.add_axes([0.82, 0.06, 0.12, 0.04])  # x, y, width, height (y increased from 0.02 to 0.06)
+play_ax = fig.add_axes([0.82, 0.02, 0.12, 0.04])
 play_button = Button(play_ax, 'Play')
 
 anim_running = True
 def toggle_play(event):
-    global anim_running, current_idx
+    global anim_running
     if anim_running:
         ani.event_source.stop()
-        # force draw of current frame so it remains visible when paused
-        try:
-            _orig_update(current_idx)
-        except Exception:
-            pass
-        fig.canvas.draw_idle()
         play_button.label.set_text('Play')
     else:
         ani.event_source.start()
@@ -204,13 +196,11 @@ play_button.on_clicked(toggle_play)
 # Keep slider synced while animating by updating slider in update()
 _orig_update = update
 def update_with_slider(frame):
-    global current_idx
     # If user is dragging the slider, show the slider frame instead of the animation frame
     if slider_active:
         idx = slider_idx
     else:
         idx = int(frame)  # use current animation frame
-    current_idx = idx  # update tracked current frame
     result = _orig_update(idx)
     # update slider value only when not interacting (avoid triggering on_slider)
     if not slider_active:
