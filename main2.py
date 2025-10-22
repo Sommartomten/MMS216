@@ -19,8 +19,11 @@ I = ((1/12)*m*(L**2)+m*((L/2)-a*L)**2)+M*(a*L)**2
 
 # Initial angles 
 phi0 = (np.arcsin(-hight / (L - (L*a))))  
-theta0 = (np.pi - phi0)  # Set theta0 to -pi (180 degrees) for negative x-direction
-
+theta0 = ( -phi0-np.pi)  # Set theta0 to -pi (180 degrees) for negative x-direction
+X = (L - (L*a)) * np.cos(phi0) + l * np.cos(theta0 + phi0)
+Y = (L - (L*a)) * np.sin(phi0) + l * np.sin(theta0 + phi0)
+print(phi0, theta0)
+print(X, Y)
 phidot0 = 0.0
 thetadot0 = 0.0
 u0 = (phi0, theta0, phidot0, thetadot0)
