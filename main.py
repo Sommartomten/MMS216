@@ -11,18 +11,24 @@ K=2
 m=50
 M=500
 h=4
+<<<<<<< HEAD
 tspan = np.linspace(0, 6, 300)
 u0 = [-(np.arccos(1)-np.arccos(h/(L-aL))),0.0]
+=======
+tspan = np.linspace(0, 2.58, 300)
+u0 = [np.arcsin(((-h)/(L-aL))),0.0]
+>>>>>>> f06a9a1a73bfca92f7b51b72a5035f3ddbbbc3ab
 
 
 # %% Define derivative function
+
 def f(t, u, K):
     phi,w=u
     Ia=(M*(aL)**2+M*K**2)
     Is=m*(L/2-aL)**2+(m*L**2)/12
     I=Ia+Is
-    Ma=M*g*np.sin(phi)*aL
-    Ms=m*g*np.sin(phi)*(L/2-aL)
+    Ma=M*g*np.cos(phi)*aL
+    Ms=m*g*np.cos(phi)*(L/2-aL)
     Mm=Ma-Ms
     dudt = [w,Mm/I]
     return dudt
