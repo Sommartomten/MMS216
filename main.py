@@ -10,7 +10,7 @@ g=9.82
 K=2
 m=50
 M=500
-h=5
+h=4
 tspan = np.linspace(0, 6, 300)
 u0 = [-(np.arccos(1)-np.arccos(h/(L-aL))),0.0]
 
@@ -29,6 +29,22 @@ def f(t, u, K):
 # %% Solve differential equation
 sol = solve_ivp(lambda t, u: f(t, u, K), [tspan[0], tspan[-1]], y0=u0, t_eval=tspan, rtol=1e-7)
 print(sol)
+
+def print_states_at_times(sol, times, labels=None):
+    # header
+    print("Time (s)\tphi (deg)\tphi_dot (deg/s)")
+    for i, tq in enumerate(times):
+        # interpolera till tid tq
+        phi = np.interp(tq, sol.t, sol.y[0])
+        w   = np.interp(tq, sol.t, sol.y[1])
+        print(f"{tq:.2f}\t\t{np.degrees(phi):.3f}\t\t{np.degrees(w):.3f}")
+        if labels is not None:
+            print(labels[i])
+
+# Exempel: skriv ut de två rader du frågade om
+print_states_at_times(sol, [2.58, 2.33],
+                      ["The mass CANNOT rotate.", "The mass CAN rotate."])
+# ...existing code...
 # %% Plot states
 plt.figure(1)
 for i in range(sol.y.shape[0]):
@@ -58,7 +74,8 @@ for i in range(sol.y.shape[1]):
 
     Fs[i] = m*L/2*yy[1]-m*g*np.sin(sol.y[0, i])
     Fn2[i] = m*L/2*yy[0]**2-m*g*np.cos(sol.y[0, i])
-#print(Fn-Fn2)
+
+
 
 plt.figure(2)
 plt.plot(sol.t, Fs)
