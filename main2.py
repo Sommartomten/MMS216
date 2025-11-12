@@ -169,7 +169,8 @@ def on_slider(val):
     fig.canvas.draw_idle()
 
 frame_slider.on_changed(on_slider)
-
+    
+    
 # Detect mouse release to stop "dragging" mode
 def on_slider_release(event):
     global slider_active
