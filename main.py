@@ -89,4 +89,32 @@ plt.legend(['Fx', 'Fy'])
 plt.xlabel('phi')
 plt.ylabel('F')
 plt.title('Stödkrafter (Fx,Fy) som funktion av vinkel')
+
+# --- Tillagt: energiberäkningar (T, V, E=T+V) ---
+# beräkna tröghetsmoment (samma som i f)
+Ia = M*(aL)**2 + M*K**2
+Is = m*(L/2 - aL)**2 + (m*L**2)/12
+I = Ia + Is
+
+phi = sol.y[0, :]
+w = sol.y[1, :]
+
+T = 0.5 * I * w**2                        # kinetisk energi
+C = M*g*aL - m*g*(L/2 - aL)               # koefficient för cos(phi) i potentiell energi
+V = C * np.cos(phi)                       # potentiell energi (val av referens)
+E = T + V                                 # total energi
+
+# Skriv ut avvikelse från första till sista tidpunkten
+E0 = E[0]
+dE_max = np.max(np.abs(E - E0))
+print(f"Max avvikelse i energi från startvärde: {dE_max:.3e} (bör vara nära 0 om konservativt)")
+
+plt.figure(5)
+plt.plot(sol.t, T, label='T (kinetisk)')
+plt.plot(sol.t, V, label='V (potentiell)')
+plt.plot(sol.t, E, label='E (total)')
+plt.legend()
+plt.xlabel('t')
+plt.ylabel('Energi')
+plt.title('Energi: T, V och total (kontroll av T1+V1 = T2+V2)')
 plt.show(block=True)
